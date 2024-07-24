@@ -32,7 +32,7 @@ we can break down the task into the following steps:
 
 2. Link Patients to Accounts:
    - Determine the appropriate field (e.g., patient ID) to link patients to accounts. 
-   - Update the patient entities in the database to include a reference to the associated account.
+   - Update the patient entities in the database to include a accountReference to the associated account.
 
 3. Save Accounts to Database:
    - Create an entity class for the Account resource. 

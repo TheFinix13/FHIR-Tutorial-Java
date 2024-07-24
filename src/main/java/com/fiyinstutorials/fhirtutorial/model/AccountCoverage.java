@@ -12,8 +12,8 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "coverage")
-public class Coverage {
+@Table(name = "account_coverage")
+public class AccountCoverage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
@@ -22,7 +22,7 @@ public class Coverage {
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "coverage_reference_id")
-    private Reference coverage;
+    private AccountReference coverage;
 
     private int priority;
 

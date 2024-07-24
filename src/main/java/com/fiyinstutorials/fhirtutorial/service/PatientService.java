@@ -1,8 +1,7 @@
-package com.fiyinstutorials.fhirtutorial.hapi;
+package com.fiyinstutorials.fhirtutorial.service;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import com.fiyinstutorials.fhirtutorial.model.Identifier;
 import com.fiyinstutorials.fhirtutorial.repository.IdentifierRepository;
 import com.fiyinstutorials.fhirtutorial.repository.PatientRepository;
 import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
@@ -14,7 +13,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class HapiPatientService {
+public class PatientService {
 
     @Value("${hapi.server.base-url}")
     private String hapiServerBaseUrl;
@@ -36,15 +34,13 @@ public class HapiPatientService {
     private final PatientRepository patientRepository;
     private final IdentifierRepository identifierRepository;
     private final ModelMapper modelMapper;
-    private final RestTemplate restTemplate;
 
 
     @Autowired
-    public HapiPatientService(PatientRepository patientRepository, IdentifierRepository identifierRepository, ModelMapper modelMapper, RestTemplate restTemplate) {
+    public PatientService(PatientRepository patientRepository, IdentifierRepository identifierRepository, ModelMapper modelMapper) {
         this.patientRepository = patientRepository;
         this.identifierRepository = identifierRepository;
         this.modelMapper = modelMapper;
-        this.restTemplate = restTemplate;
     }
 
     public List<PatientResponse> getAllPatients() {
@@ -190,20 +186,20 @@ public class HapiPatientService {
             patientRepository.save(entity);
 
             if (patientResponse.getIdentifiers() != null) {
-                List<com.fiyinstutorials.fhirtutorial.model.Identifier> identifiers = patientResponse
+                List<com.fiyinstutorials.fhirtutorial.model.Identifier> identifies = patientResponse
                         .getIdentifiers()
                         .stream()
                         .map(dto -> {
-                            Identifier identifier = new com.fiyinstutorials.fhirtutorial.model.Identifier();
+                            com.fiyinstutorials.fhirtutorial.model.Identifier identifier = new com.fiyinstutorials.fhirtutorial.model.Identifier();
                             identifier.setResourceType(StatusCodes.RESOURCE_TYPE_PATIENT);
                             identifier.setResourceId(entity.getId());
-                            identifier.setSystem(dto.getSystem());
-                            identifier.setValue(dto.getValue());
+                            identifier.setIdentifierSystem(dto.getSystem());
+                            identifier.setIdentifierValue(dto.getValue());
                             return identifier;
                         })
                         .collect(Collectors.toList());
 
-                identifierRepository.saveAll(identifiers);
+                identifierRepository.saveAll(identifies);
             }
 
             log.info("Added patient with ID: {}", patientResponse.getPatientId());

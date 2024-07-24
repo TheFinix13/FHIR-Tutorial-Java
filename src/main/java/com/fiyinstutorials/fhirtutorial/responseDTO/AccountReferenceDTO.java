@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CoverageDTO {
-    private ReferenceDTO coverage;
-    private int priority;
+public class AccountReferenceDTO {
+    private String reference;
+    private String display;
 }

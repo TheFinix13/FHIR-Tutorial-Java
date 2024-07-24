@@ -12,7 +12,7 @@
 - For developers, This displays other resources that the patient resource can:
     - ##### either implement
     - ##### be referenced by or associated with.
-    - ##### and extensional references.
+    - ##### and extensional accountReferences.
 These extensions provide additional data elements or relationships that can be attached
 
 3. Resource Structure
@@ -27,7 +27,7 @@ These extensions provide additional data elements or relationships that can be a
 4. Resource Search Params
 - This section lists the search parameters that can be used to query the resource explaining how to request specific data from a server to avoid complexity in data retrieval processes.
 - (e.g. Rather than going into the address field of the patient resource, you can simply query (_patient.address.city, patient.address.state, patient.address.postalcode_) to get the address details.)
-- search parameters either return "String, token, reference, date" etc. data types.
+- search parameters either return "String, token, accountReference, date" etc. data types.
 
 Click here to view a Patient example in either XML or JSON format:
 # [Patient Example](https://hl7.org/fhir/patient-example.html)

@@ -121,7 +121,7 @@ VERB [base]/[type]/[id] {?_format=[mime-type]}
 (**_elements**) - Ask for a particular set of elements to be returned
 - Indicates that the resource(s) in the response should only include the enumerated elements (plus any mandatory or modifier elements).
 - Example Request:
-  - GET [base]/Patient?_elements=identifier,active,link
+  - GET [base]/Patient?_elements=identify,active,link
 
 # Preferred returns
 - There are different types of returns that a server can provide. 

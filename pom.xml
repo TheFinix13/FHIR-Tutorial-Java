@@ -44,6 +44,7 @@
 			<optional>true</optional>
 		</dependency>
 
+
 		<!-- Jackson for JSON processing -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

@@ -23,7 +23,7 @@
          "propertyA" : { CodeableConcept }, ---- example of an object property that has a binding to a value set
     },
     "property4" : [{                ---- array property that contains items which are objects themselves.
-        "propertyB" : { Reference(ResourceType) } ---- example of an object property in an array that contains references to other resources
+        "propertyB" : { Reference(ResourceType) } ---- example of an object property in an array that contains accountReferences to other resources
     }]
     }
   - 

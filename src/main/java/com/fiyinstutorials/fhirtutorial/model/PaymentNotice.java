@@ -7,8 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Builder
@@ -33,16 +32,13 @@ public class PaymentNotice {
     private String status;
     private String requestReference;
     private String responseReference;
-    private LocalDateTime created;
+    private Date created;
     private String reporterReference;
     private String paymentReference;
-    private LocalDate paymentDate;
+    private Date paymentDate;
     private String payeeReference;
-
-    @ManyToOne
-    @JoinColumn(name = "recipient_reference_id")
-    private Identifier recipientReference;
-
+    private String recipientIdentifierSystem;
+    private String recipientIdentifierValue;
     private String amountCurrency;
     private Double amountValue;
     private String paymentStatus;

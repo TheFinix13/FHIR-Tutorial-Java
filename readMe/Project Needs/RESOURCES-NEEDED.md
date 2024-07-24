@@ -1,10 +1,10 @@
 Patient Resource:
 Purpose: To get demographic and identifying information about patients.
-Usage: We'll use this resource to pull basic patient information, including names, identifiers, contact details, etc.
+Usage: We'll use this resource to pull basic patient information, including names, identifies, contact details, etc.
 
 Account Resource:
 Purpose: To track financial information related to a patient.
-Usage: We'll use this resource to get details about patient accounts, including the balance, account status, and any relevant identifiers.
+Usage: We'll use this resource to get details about patient accounts, including the balance, account status, and any relevant identifies.
 
 ChargeItem Resource:
 Purpose: To detail individual charges on a patient's account.
@@ -31,8 +31,8 @@ Purpose: To provide responses to claims.
 Usage: We'll use this resource to get information about the adjudication of claims, including approved amounts and adjustments.
 
 Coverage Resource:
-Purpose: To provide insurance coverage details.
-Usage: We'll use this resource to retrieve information about the patient's insurance coverage, including the plan details and coverage limits.
+Purpose: To provide insurance accountCoverage details.
+Usage: We'll use this resource to retrieve information about the patient's insurance accountCoverage, including the plan details and accountCoverage limits.
 
 ExplanationOfBenefit Resource:
 Purpose: To summarize benefits provided.

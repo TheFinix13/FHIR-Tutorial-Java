@@ -13,41 +13,37 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Data
 @Entity
-@Table (name = "identifier")
+@Table(name = "identifier")
+
 public class Identifier {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        @JsonIgnore
-        @Column(name = "identifier_id")
-        private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
+    @Column(name = "identifier_id")
+    private Long id;
 
-        private String resourceType;
-        private Long resourceId;
-        private String system;
-        private String value;
+    private String resourceType;
+    private Long resourceId;
+    private String identifierSystem;
+    private String identifierValue;
 
-        @ManyToOne
-        @JoinColumn(name = "patient_id")
-        private Patient patient;
+    @ManyToOne
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
 
-        @ManyToOne
-        @JoinColumn(name = "account_id")
-        private Account account;
+    @ManyToOne
+    @JoinColumn(name = "account_id")
+    private Account account;
 
-        @ManyToOne
-        @JoinColumn(name = "charge_item_id")
-        private ChargeItem chargeItem;
+    @ManyToOne
+    @JoinColumn(name = "payment_notice_id")
+    private PaymentNotice paymentNotice;
 
-        @ManyToOne
-        @JoinColumn(name = "claim_id")
-        private Claim claim;
+    @ManyToOne
+    @JoinColumn(name = "claim_response_id")
+    private ClaimResponse claimResponse;
 
-        @ManyToOne
-        @JoinColumn(name = "invoice_id")
-        private Invoice invoice;
-
-        @ManyToOne
-        @JoinColumn(name = "payment_notice_id")
-        private PaymentNotice paymentNotice;
 
 }
+
+

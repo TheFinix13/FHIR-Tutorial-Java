@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 
 @Builder
@@ -34,11 +35,7 @@ public class Account {
     private String accountStatus;
     private LocalDate servicePeriodStart;
     private LocalDate servicePeriodEnd;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "owner_reference_id")
-    private Reference ownerReference;
-
+    private String ownerReference;
     private String description;
     private String aggregate;
     private String term;
@@ -47,13 +44,17 @@ public class Account {
     private Double value;
     private String calculateAt;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "account_id")
-    private List<Reference> subject;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    private Set<AccountReference> subject;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Coverage> coverages;
+    private List<AccountCoverage> accountCoverages;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Identifier> identifiers;
+
+    @ManyToOne
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
+
 }

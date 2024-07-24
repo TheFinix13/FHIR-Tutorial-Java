@@ -1,6 +1,7 @@
 package com.fiyinstutorials.fhirtutorial.responseDTO;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class AccountResponse {
         private String accountStatus;
         private LocalDate servicePeriodStart;
         private LocalDate servicePeriodEnd;
-        private ReferenceDTO ownerReference;
+        private String ownerReference;
         private String description;
         private String aggregate;
         private String term;
@@ -24,8 +25,8 @@ public class AccountResponse {
         private String currency;
         private Double value;
         private String calculateAt;
-        private List<ReferenceDTO> subject = new ArrayList<>();
-        private List<CoverageDTO> coverages = new ArrayList<>();
+        private List<AccountReferenceDTO> subject = new ArrayList<>();
+        private List<AccountCoverageDTO> coverages = new ArrayList<>();
         private List<IdentifierDTO> identifiers = new ArrayList<>();
 
 }

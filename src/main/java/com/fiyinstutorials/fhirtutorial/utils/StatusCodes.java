@@ -62,5 +62,39 @@ public class StatusCodes {
     public static final String RESOURCE_TYPE_INVOICE = "INVOICE RESOURCE";
     public static final String RESOURCE_TYPE_CLAIM = "CLAIM RESOURCE";
 
+    public static final String CLAIM_RESPONSE_STATUS_CODE_ACTIVE = "Active";  //The instance is currently in-force.
+    public static final String CLAIM_RESPONSE_STATUS_CODE_CANCELLED = "Cancelled";  //The instance is withdrawn, rescinded or reversed.
+    public static final String CLAIM_RESPONSE_STATUS_CODE_DRAFT = "Draft";  //A new instance the contents of which is not complete.
+    public static final String CLAIM_RESPONSE_STATUS_CODE_ERROR = "Entered in Error";  //The instance was entered in error
+
+  public static final String CLAIM_RESPONSE_USE_CLAIM = "Claim";  // The treatment is complete and this represents a Claim for the services.
+  public static final String CLAIM_RESPONSE_USE_PREAUTHORIZATION = "Preauthorization";  // The treatment is proposed and this represents a Pre-authorization for the services.
+  public static final String CLAIM_RESPONSE_USE_PREDETERMINATION = "Predetermination";  // The treatment is proposed and this represents a Pre-determination for the services.
+
+    public static final String CLAIM_RESPONSE_OUTCOME_QUEUED = "Queued";  // The Claim/Pre-authorization/Pre-determination has been received but processing has not begun.
+    public static final String CLAIM_RESPONSE_OUTCOME_COMPLETE = "Complete";  // The processing has completed without errors.
+    public static final String CLAIM_RESPONSE_OUTCOME_ERROR = "Error";  // One or more errors have been detected in the Claim.
+    public static final String CLAIM_RESPONSE_OUTCOME_PARTIAL = "Partial";  // No errors have been detected in the Claim and some of the adjudication has been performed.
+
+    public static final String CLAIM_RESPONSE_PAYEE_TYPE_SUBSCRIBER = "Subscriber";  // The subscriber (policy holder) will be reimbursed.
+    public static final String CLAIM_RESPONSE_PAYEE_TYPE_PROVIDER = "Provider";  // Any benefit payable will be paid to the provider (Assignment of Benefit).
+    public static final String CLAIM_RESPONSE_PAYEE_TYPE_BENEFICIARY = "Beneficiary";  // The beneficiary (patient) will be reimbursed.
+    public static final String CLAIM_RESPONSE_PAYEE_TYPE_OTHER = "Other";  // Any benefit payable will be paid to a third party such as a guarantor.
+
+    public static final String ADJUDICATION_CATEGORY_SUBMITTED_AMOUNT = "submitted";  // The total submitted amount for the claim or group or line item.
+    public static final String ADJUDICATION_CATEGORY_COPAY = "copay";  // Patient Co-Payment
+    public static final String ADJUDICATION_CATEGORY_ELIGIBLE_AMOUNT = "eligible";  // Amount of the change which is considered for adjudication.
+    public static final String ADJUDICATION_CATEGORY_DEDUCTIBLE = "deductible";  // Amount deducted from the eligible amount prior to adjudication.
+    public static final String ADJUDICATION_CATEGORY_UNALLOCATED_DEDUCTIBLE = "unallocdeduct";  // The amount of deductible which could not be allocated to other line items.
+    public static final String ADJUDICATION_CATEGORY_ELIGIBLE_PERCENTAGE = "eligpercent";  // Eligible Percentage.
+    public static final String ADJUDICATION_CATEGORY_TAX = "tax";  // The amount of tax.
+    public static final String ADJUDICATION_CATEGORY_BENEFIT_AMOUNT = "benefit";  // Amount payable under the coverage.
+
+    public static final String PAYMENT_TYPE_COMPLETE = "Complete";  // Complete (final) payment of the benefit under the Claim less any adjustments.
+    public static final String PAYMENT_TYPE_PARTIAL = "Partial";  // Partial payment of the benefit under the Claim less any adjustments.
+
+
+
+
 
 }
