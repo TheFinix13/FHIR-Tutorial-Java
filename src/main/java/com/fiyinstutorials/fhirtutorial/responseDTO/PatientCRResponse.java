@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PatientClaimResponse {
+public class PatientCRResponse {
     //Patient Text2Pay Info
     private String patientUniqueId;
     private String firstName;
@@ -39,8 +39,8 @@ public class PatientClaimResponse {
     private String claimResponseUse;
     private String claimResponseOutcome;
     private String claimResponseDisposition;
-    private List<ClaimResponseItemDTO> item = new ArrayList<>();
-    private List<ClaimResponseAdjudicationDTO> total = new ArrayList<>();
+    private List<CRResponseItemDTO> item = new ArrayList<>();
+    private List<CRResponseAdjudicationDTO> total = new ArrayList<>();
     private List<CodingDTO> paymentType = new ArrayList<>();
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date paymentDate;

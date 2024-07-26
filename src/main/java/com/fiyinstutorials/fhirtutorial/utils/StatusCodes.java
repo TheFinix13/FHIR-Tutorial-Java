@@ -26,10 +26,10 @@ public class StatusCodes {
     public static final String CLAIM_PAYEE_CODE_BENEFICIARY = "Beneficiary";
     public static final String CLAIM_PAYEE_CODE_OTHER = "other";
 
-    public static final String PAYMENT_NOTICE_CODE_ACTIVE = "Active";
-    public static final String PAYMENT_NOTICE_CODE_CANCELLED = "Cancelled";
-    public static final String PAYMENT_NOTICE_CODE_DRAFT = "Draft";
-    public static final String PAYMENT_NOTICE_CODE_ERROR = "Entered in Error";
+    public static final String PAYMENT_NOTICE_CODE_ACTIVE = "active";
+    public static final String PAYMENT_NOTICE_CODE_CANCELLED = "cancelled";
+    public static final String PAYMENT_NOTICE_CODE_DRAFT = "draft";
+    public static final String PAYMENT_NOTICE_CODE_ERROR = "entered-in-error";
 
     public static final String PAYMENT_STATUS_CODE_PAID = "Paid";//The payment has been sent physically or electronically.
     public static final String PAYMENT_STATUS_CODE_CLEARED = "Cleared";//The payment has been received by the payee.
@@ -58,7 +58,8 @@ public class StatusCodes {
     public static final String RESOURCE_TYPE_ACCOUNT = "ACCOUNT RESOURCE";
     public static final String RESOURCE_TYPE_CHARGE_ITEM = "CHARGE-ITEM RESOURCE";
     public static final String RESOURCE_TYPE_COVERAGE = "COVERAGE RESOURCE";
-    public static final String RESOURCE_TYPE_PAYMENT_NOTICE = "PAYMENT-NOTICE RESOURCE";
+    public static final String RESOURCE_TYPE_PAYMENT_NOTICE = "PAYMENT NOTICE RESOURCE";
+    public static final String RESOURCE_TYPE_CLAIM_RESPONSE = "CLAIM RESPONSE RESOURCE";
     public static final String RESOURCE_TYPE_INVOICE = "INVOICE RESOURCE";
     public static final String RESOURCE_TYPE_CLAIM = "CLAIM RESOURCE";
 

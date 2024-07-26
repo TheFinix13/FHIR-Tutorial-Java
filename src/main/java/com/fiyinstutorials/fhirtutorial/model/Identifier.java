@@ -23,7 +23,7 @@ public class Identifier {
     private Long id;
 
     private String resourceType;
-    private Long resourceId;
+    private String resourceId;
     private String identifierSystem;
     private String identifierValue;
 

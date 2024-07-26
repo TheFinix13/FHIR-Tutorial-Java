@@ -27,8 +27,6 @@ public class Patient {
     @Column(name = "patient_id")
     private Long id;
 
-    private String EHRCategoryTag;
-
     @Column(name = "patient_server_id")
     private String patientId;
 

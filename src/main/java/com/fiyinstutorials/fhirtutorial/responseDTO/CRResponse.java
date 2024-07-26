@@ -2,7 +2,6 @@ package com.fiyinstutorials.fhirtutorial.responseDTO;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fiyinstutorials.fhirtutorial.model.Identifier;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +13,6 @@ import java.util.List;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CRResponse {
-    private String EHRCategoryTag;
     private String claimResponseId;
     private String claimResponseUniqueId;
     private String status;
@@ -32,9 +30,9 @@ public class CRResponse {
     private String disposition;
     private List<CodingDTO> payeeType = new ArrayList<>();
 
-    private List<ClaimResponseItemDTO> item = new ArrayList<>();
-    private List<ClaimResponseAdjudicationDTO> total = new ArrayList<>();
-    private List<Identifier> identifier = new ArrayList<>();
+    private List<CRResponseItemDTO> item = new ArrayList<>();
+    private List<CRResponseAdjudicationDTO> total = new ArrayList<>();
+    private List<IdentifierDTO> identifier = new ArrayList<>();
 
     //Payment
     private List<CodingDTO> paymentType = new ArrayList<>();

@@ -24,4 +24,8 @@ public class Coding {
     @ManyToOne
     @JoinColumn(name = "claim_response_id")
     private ClaimResponse claimResponse;
+
+    @ManyToOne
+    @JoinColumn(name = "payment_notice_id")
+    private PaymentNotice paymentNotice;
 }

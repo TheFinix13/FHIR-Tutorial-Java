@@ -23,12 +23,10 @@ public class PaymentNotice {
     @Column(name = "payment_notice_id")
     private Long id;
 
-    private String EHRCategoryTag;
-
     @Column(name = "payment_notice_server_id")
-    private String noticeId;
+    private String paymentNoticeId;
 
-    private String noticeUniqueId;
+    private String paymentNoticeUniqueId;
     private String status;
     private String requestReference;
     private String responseReference;
@@ -41,7 +39,9 @@ public class PaymentNotice {
     private String recipientIdentifierValue;
     private String amountCurrency;
     private Double amountValue;
-    private String paymentStatus;
+
+    @OneToMany(mappedBy = "paymentNotice", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Coding> paymentStatus;
 
     @OneToMany(mappedBy = "paymentNotice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Identifier> identifiers;

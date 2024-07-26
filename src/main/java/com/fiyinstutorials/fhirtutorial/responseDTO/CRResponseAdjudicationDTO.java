@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ClaimResponseAdjudicationDTO {
+public class CRResponseAdjudicationDTO {
     private String adjudicationCategoryCode;
     private String adjudicationReasonSystem;
     private String adjudicationReasonCode;

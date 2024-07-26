@@ -1,15 +1,13 @@
 package com.fiyinstutorials.fhirtutorial.responseDTO;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
-@Data
 @Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountCoverageDTO {
     private AccountReferenceDTO coverage;
     private int priority;

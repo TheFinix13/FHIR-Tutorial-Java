@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentNoticeRepository extends JpaRepository<PaymentNotice, Long> {
+    boolean existsByPaymentNoticeId(String paymentNoticeId);
 }

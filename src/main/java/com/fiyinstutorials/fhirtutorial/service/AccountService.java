@@ -151,8 +151,7 @@ public class AccountService {
                 AccountResponse accountResponse = new AccountResponse();
 
                 accountResponse.setAccountId(accountResource.getIdElement().getIdPart());
-                accountResponse.setEHRCategoryTag(hapiServerTag);
-                accountResponse.setAccountUniqueId(hapiServerTag + "-" + accountResource.getIdElement().getIdPart());
+                accountResponse.setAccountUniqueId(hapiServerTag + "/"+StatusCodes.RESOURCE_TYPE_ACCOUNT+"-" + accountResource.getIdElement().getIdPart());
 
                 if (accountResource.hasName()) {
                     accountResponse.setAccountName(accountResource.getName());
@@ -238,7 +237,7 @@ public class AccountService {
                     .map(dto -> {
                         Identifier identifier = new Identifier();
                         identifier.setResourceType(StatusCodes.RESOURCE_TYPE_ACCOUNT);
-                        identifier.setResourceId(account.getId());
+                        identifier.setResourceId(accountResponse.getAccountId());
                         identifier.setIdentifierSystem(dto.getSystem());
                         identifier.setIdentifierValue(dto.getValue());
                         return identifier;

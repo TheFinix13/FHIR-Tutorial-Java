@@ -93,8 +93,7 @@ public class PatientService {
 
             PatientResponse patientResponse = new PatientResponse();
             patientResponse.setPatientId(patientId);
-            patientResponse.setEHRCategoryTag(hapiServerTag);
-            patientResponse.setPatientUniqueId(hapiServerTag + "-" + patientId);
+            patientResponse.setPatientUniqueId(hapiServerTag + "/"+StatusCodes.RESOURCE_TYPE_PATIENT+"-" + patientId);
 
             Optional<HumanName> officialName = patient.getName().stream()
                     .filter(name -> HumanName.NameUse.OFFICIAL.equals(name.getUse()))
@@ -192,7 +191,7 @@ public class PatientService {
                         .map(dto -> {
                             com.fiyinstutorials.fhirtutorial.model.Identifier identifier = new com.fiyinstutorials.fhirtutorial.model.Identifier();
                             identifier.setResourceType(StatusCodes.RESOURCE_TYPE_PATIENT);
-                            identifier.setResourceId(entity.getId());
+                            identifier.setResourceId(patientResponse.getPatientId());
                             identifier.setIdentifierSystem(dto.getSystem());
                             identifier.setIdentifierValue(dto.getValue());
                             return identifier;

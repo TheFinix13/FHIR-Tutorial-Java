@@ -33,7 +33,7 @@ public class ClaimResponseService {
     private String hapiServerTag;
 
     private final FhirContext fhirContext = FhirContext.forR4();
-    ;
+
     //    private final PatientRepository patientRepository;
     private final ClaimResponseRepository claimResponseRepository;
     private final RestTemplate restTemplate;
@@ -47,6 +47,14 @@ public class ClaimResponseService {
         this.modelMapper = modelMapper;
     }
 
+    /**
+     * Template to Fetch resources from the FHIR server.
+     * <p>
+     * Builds the URL for querying ClaimResponse resources from the FHIR server.
+     * Makes an HTTP GET request to the server and returns the response as a String.
+     *
+     * @return The response from the FHIR server as a String
+     */
     public String fetchClaimResponses() {
         // Build the URL for the FHIR server query
         String url = UriComponentsBuilder.fromHttpUrl(hapiServerBaseUrl)
@@ -65,6 +73,230 @@ public class ClaimResponseService {
         return restTemplate.getForObject(url, String.class);
     }
 
+    /**
+     * Fetches a single ClaimResponse for a specific patient ID.
+     *
+     * @param patientId The ID of the patient to filter ClaimResponses by
+     * @return PatientClaimResponse object for the specified patient ID
+     */
+    public PatientCRResponse getClaimResponseByPatientId(String patientId) {
+        ClaimResponse claimResponse = fetchClaimResponseByPatientId(patientId);
+
+        // Map and return the PatientClaimResponse
+        return claimResponse != null ? mapToPatientClaimResponse(claimResponse) : null;
+
+    }
+    /**
+     * Fetches a single ClaimResponse from the FHIR server for a specific patient ID.
+     *
+     * @param patientId The ID of the patient to filter ClaimResponses by
+     * @return ClaimResponse object for the specified patient ID, or null if not found
+     */
+    private ClaimResponse fetchClaimResponseByPatientId(String patientId) {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
+
+        Bundle bundle = client.search()
+                .forResource(ClaimResponse.class)
+                .where(ClaimResponse.PATIENT.hasId(patientId))
+                .returnBundle(Bundle.class)
+                .execute();
+
+        // Assuming we want the first entry if multiple results are returned
+        if (bundle.getEntry() != null && !bundle.getEntry().isEmpty()) {
+            return (ClaimResponse) bundle.getEntry().get(0).getResource();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Fetches all ClaimResponses and maps them to PatientClaimResponse objects.
+     *
+     * @return List of PatientClaimResponse objects
+     */
+    public List<PatientCRResponse> getAllPatientClaimResponses() {
+        // Fetch all ClaimResponses
+        List<ClaimResponse> claimResponses = fetchAllClaimResponses();
+
+        // Map and return list of PatientClaimResponse
+        return claimResponses.stream()
+                .map(this::mapToPatientClaimResponse)
+                .collect(Collectors.toList());
+    }
+    /**
+     * Fetches all ClaimResponses from the FHIR server.
+     *
+     * @return List of ClaimResponse objects
+     */
+    private List<ClaimResponse> fetchAllClaimResponses() {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
+
+        Bundle bundle = client.search()
+                .forResource(ClaimResponse.class)
+                .returnBundle(Bundle.class)
+                .execute();
+
+        return bundle.getEntry().stream()
+                .map(entry -> (ClaimResponse) entry.getResource())
+                .collect(Collectors.toList());
+    }
+    /**
+     * Maps a ClaimResponse object to a PatientClaimResponse object.
+     *
+     * @param claimResponse The ClaimResponse object
+     * @return PatientClaimResponse object
+     */
+    private PatientCRResponse mapToPatientClaimResponse(ClaimResponse claimResponse) {
+        // Fetch Patient details using patient reference from ClaimResponse
+        String patientReference = claimResponse.getPatient().getReference();
+        Patient patient = fetchPatientIdByReference(patientReference);
+
+        PatientCRResponse patientCRResponse = new PatientCRResponse();
+        // Map Patient details
+        if (patient != null) {
+            mapPatientDetails(patient, patientCRResponse);
+        }
+        // Map ClaimResponse Data
+        mapClaimResponseDetails(claimResponse, patientCRResponse);
+
+        return patientCRResponse;
+    }
+
+    private Patient fetchPatientIdByReference(String patientReference) {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
+
+        // Extract the patient ID from the reference string
+        String[] referenceParts = patientReference.split("/");
+        if (referenceParts.length != 2 || !referenceParts[0].equals("Patient")) {
+            log.error("Invalid patient reference: {}", patientReference);
+            return null;
+        }
+        String patientId = referenceParts[1];
+        try {
+            return client.read()
+                    .resource(Patient.class)
+                    .withId(patientId)
+                    .execute();
+        }catch (Exception e) {
+            log.error("Error fetching Patient with ID {}: {}", patientId, e.getMessage());
+            return null;
+        }
+    }
+    /**
+     * Fetches and saves ClaimResponse resources from the FHIR server.
+     *
+     * Fetches ClaimResponse resources in batches, processes each batch to map them to DTOs,
+     * converts DTOs to entity objects, and saves them to the database.
+     * Continues to fetch subsequent pages until no more pages are available.
+     */
+    public void fetchAndSaveClaimResponses() {
+        int pageCount = 100; // Adjust batch size as needed
+
+        Bundle bundle = fetchInitialClaimResponses(pageCount);
+        if (bundle == null) {
+            log.error("Failed to fetch initial ClaimResponses.");
+            return;
+        }
+
+        while (bundle != null && !bundle.getEntry().isEmpty()) {
+            // Process the fetched ClaimResponses and save them
+            List<CRResponse> crResponses = bundle.getEntry().stream()
+                    .filter(entry -> entry.getResource() instanceof ClaimResponse)
+                    .map(entry -> {
+                        ClaimResponse claimResponse = (ClaimResponse) entry.getResource();
+                        return mapToCRResponse(claimResponse);
+                    })
+                    .collect(Collectors.toList());
+
+            if (crResponses.isEmpty()) {
+                log.info("No new ClaimResponses found on this page.");
+            }
+
+            // Convert CRResponse DTOs to entity objects
+            List<com.fiyinstutorials.fhirtutorial.model.ClaimResponse> claimResponseEntities = crResponses.stream()
+                    .map(dto -> modelMapper.map(dto, com.fiyinstutorials.fhirtutorial.model.ClaimResponse.class))
+                    .collect(Collectors.toList());
+
+            // Save entities to the database
+            claimResponseEntities.forEach(entity -> {
+                if (claimResponseRepository.existsByClaimResponseId(entity.getClaimResponseId())) {
+                    log.info("Skipping existing ClaimResponse with ID: {}", entity.getClaimResponseId());
+                } else {
+                    claimResponseRepository.save(entity);
+                    log.info("Saved new ClaimResponse with ID: {}", entity.getClaimResponseId());
+                }
+            });
+
+            // Fetch the next page
+            bundle = fetchNextPage(bundle);
+        }
+    }
+    /**
+     * Fetches the initial batch of ClaimResponse resources.
+     *
+     * Creates a client for the FHIR server, initializes a logging interceptor,
+     * and executes a search query to fetch the initial batch of ClaimResponses.
+     *
+     * @param pageCount The number of ClaimResponses to fetch per page
+     * @return The initial batch of ClaimResponses as a Bundle
+     */
+    private Bundle fetchInitialClaimResponses(int pageCount) {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
+
+        try {
+            IQuery<Bundle> query = client.search()
+                    .forResource(ClaimResponse.class)
+                    .count(pageCount)
+                    .include(ClaimResponse.INCLUDE_PATIENT)
+                    .returnBundle(Bundle.class);
+
+            return query.execute();
+        } catch (ResourceNotFoundException e) {
+            log.error("Resource not found: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error fetching initial ClaimResponses: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+    /**
+     * Fetches the next page of ClaimResponse resources.
+     * <p>
+     * Creates a client for the FHIR server and retrieves the next page of ClaimResponses
+     * based on the provided current bundle.
+     *
+     * @param currentBundle The current bundle containing ClaimResponses
+     * @return The next page of ClaimResponses as a Bundle
+     */
+    private Bundle fetchNextPage(Bundle currentBundle) {
+        if (currentBundle == null) {
+            return null;
+        }
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        try {
+            return client.loadPage().next(currentBundle).execute();
+        } catch (ResourceNotFoundException e) {
+            log.error("Resource not found: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error fetching next ClaimResponses page: {}", e.getMessage(), e);
+        }
+        return null;
+    }
+    /**
+     * Retrieves all ClaimResponse resources.
+     * <p>
+     * Adds a logging interceptor to the client, iterates through all available pages of ClaimResponses,
+     * maps them to DTOs, and returns a list of all retrieved ClaimResponse DTOs.
+     *
+     * @return A list of CRResponse DTOs representing all ClaimResponses
+     */
     public List<CRResponse> getClaimResponses() {
         // Add a logging interceptor to log requests and responses
         IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
@@ -127,15 +359,22 @@ public class ClaimResponseService {
             throw e;
         }
     }
-
+    /**
+     * Maps a ClaimResponse resource to a CRResponse DTO.
+     * <p>
+     * Extracts various fields from the ClaimResponse resource and populates
+     * the CRResponse DTO with the extracted values.
+     *
+     * @param claimResponse The ClaimResponse resource to map
+     * @return The mapped CRResponse DTO
+     */
     private CRResponse mapToCRResponse(ClaimResponse claimResponse) {
         CRResponse responseDto = new CRResponse();
 
         // Set basic fields
         String claimResponseId = claimResponse.getIdElement().getIdPart();
-        responseDto.setEHRCategoryTag(hapiServerTag);
         responseDto.setClaimResponseId(claimResponseId);
-        responseDto.setClaimResponseUniqueId(hapiServerTag + "-" + claimResponseId);
+        responseDto.setClaimResponseUniqueId(hapiServerTag + "/"+StatusCodes.RESOURCE_TYPE_CLAIM_RESPONSE+"-" + claimResponseId);
 
         if (claimResponse.hasStatus()) {
             String customStatus = mapStatus(claimResponse.getStatus().toCode());
@@ -185,13 +424,13 @@ public class ClaimResponseService {
         if (claimResponse.hasItem()) {
             responseDto.setItem(claimResponse.getItem().stream()
                     .map(item -> {
-                        ClaimResponseItemDTO itemDTO = new ClaimResponseItemDTO();
+                        CRResponseItemDTO itemDTO = new CRResponseItemDTO();
                         itemDTO.setItemSequence(item.getItemSequence());
 
                         // Map adjudications
-                        List<ClaimResponseAdjudicationDTO> adjudicationDTOs = item.getAdjudication().stream()
+                        List<CRResponseAdjudicationDTO> adjudicationDTOs = item.getAdjudication().stream()
                                 .map(adjudication -> {
-                                    ClaimResponseAdjudicationDTO adjudicationDTO = new ClaimResponseAdjudicationDTO();
+                                    CRResponseAdjudicationDTO adjudicationDTO = new CRResponseAdjudicationDTO();
                                     adjudicationDTO.setAdjudicationCategoryCode(mapAdjudicationCategory(adjudication.getCategory().getCodingFirstRep().getCode()));
                                     adjudicationDTO.setAdjudicationAmountValue(adjudication.getAmount().getValue().doubleValue());
                                     adjudicationDTO.setAdjudicationAmountCurrency(adjudication.getAmount().getCurrency());
@@ -207,12 +446,11 @@ public class ClaimResponseService {
                     })
                     .collect(Collectors.toList()));
         }
-
         // Map totals
         if (claimResponse.hasTotal()) {
             responseDto.setTotal(claimResponse.getTotal().stream()
                     .map(total -> {
-                        ClaimResponseAdjudicationDTO totalDTO = new ClaimResponseAdjudicationDTO();
+                        CRResponseAdjudicationDTO totalDTO = new CRResponseAdjudicationDTO();
                         totalDTO.setAdjudicationCategoryCode(mapAdjudicationCategory(total.getCategory().getCodingFirstRep().getCode()));
                         totalDTO.setAdjudicationAmountValue(total.getAmount().getValue().doubleValue());
                         totalDTO.setAdjudicationAmountCurrency(total.getAmount().getCurrency());
@@ -220,7 +458,6 @@ public class ClaimResponseService {
                     })
                     .collect(Collectors.toList()));
         }
-
         // Map payment details
         if (claimResponse.hasPayment()) {
             responseDto.setPaymentType(claimResponse.getPayment().getType().getCoding().stream()
@@ -248,182 +485,41 @@ public class ClaimResponseService {
                 responseDto.setPaymentIdentifierValue(claimResponse.getPayment().getIdentifier().getValue());
             }
         }
+        if (claimResponse.hasIdentifier()) {
+            responseDto.setIdentifier(claimResponse.getIdentifier().stream()
+                .map(identifier -> {
+                    IdentifierDTO identifierDTO = new IdentifierDTO();
+                    identifierDTO.setSystem(identifier.getSystem());
+                    identifierDTO.setValue(identifier.getValue());
+                    identifierDTO.setResourceType(StatusCodes.RESOURCE_TYPE_CLAIM_RESPONSE);
+                    identifierDTO.setResourceId(responseDto.getClaimResponseId());
+                    return identifierDTO;
+                })
+                .collect(Collectors.toList()));
+        }
 
         return responseDto;
 
     }
 
-    public void fetchAndSaveClaimResponses() {
-        int pageCount = 100; // Adjust batch size as needed
 
-        Bundle bundle = fetchInitialClaimResponses(pageCount);
-        if (bundle == null) {
-            log.error("Failed to fetch initial ClaimResponses.");
-            return;
-        }
-
-        while (bundle != null && !bundle.getEntry().isEmpty()) {
-            // Process the fetched ClaimResponses and save them
-            List<CRResponse> crResponses = bundle.getEntry().stream()
-                    .filter(entry -> entry.getResource() instanceof ClaimResponse)
-                    .map(entry -> {
-                        ClaimResponse claimResponse = (ClaimResponse) entry.getResource();
-                        return mapToCRResponse(claimResponse);
-                    })
-                    .collect(Collectors.toList());
-
-            if (crResponses.isEmpty()) {
-                log.info("No new ClaimResponses found on this page.");
-            }
-
-            // Convert CRResponse DTOs to entity objects
-            List<com.fiyinstutorials.fhirtutorial.model.ClaimResponse> claimResponseEntities = crResponses.stream()
-                    .map(dto -> modelMapper.map(dto, com.fiyinstutorials.fhirtutorial.model.ClaimResponse.class))
-                    .collect(Collectors.toList());
-
-            // Save entities to the database
-            claimResponseEntities.forEach(entity -> {
-                if (claimResponseRepository.existsByClaimResponseId(entity.getClaimResponseId())) {
-                    log.info("Skipping existing ClaimResponse with ID: {}", entity.getClaimResponseId());
-                } else {
-                    claimResponseRepository.save(entity);
-                    log.info("Saved new ClaimResponse with ID: {}", entity.getClaimResponseId());
-                }
-            });
-
-            // Fetch the next page
-            bundle = fetchNextPage(bundle);
-        }
-    }
-
-    private Bundle fetchInitialClaimResponses(int pageCount) {
-        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
-        try {
-            IQuery<Bundle> query = client.search()
-                    .forResource(ClaimResponse.class)
-                    .count(pageCount)
-                    .include(ClaimResponse.INCLUDE_PATIENT)
-                    .returnBundle(Bundle.class);
-
-            return query.execute();
-        } catch (ResourceNotFoundException e) {
-            log.error("Resource not found: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error fetching initial ClaimResponses: {}", e.getMessage(), e);
-        }
-        return null;
-    }
-
-    private Bundle fetchNextPage(Bundle currentBundle) {
-        if (currentBundle == null) {
-            return null;
-        }
-        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
-        try {
-            return client.loadPage().next(currentBundle).execute();
-        } catch (ResourceNotFoundException e) {
-            log.error("Resource not found: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error fetching next ClaimResponses page: {}", e.getMessage(), e);
-        }
-        return null;
-    }
-
-    /**
-     * Fetches all ClaimResponses and maps them to PatientClaimResponse objects.
-     *
-     * @return List of PatientClaimResponse objects
-     */
-    public List<PatientClaimResponse> getAllPatientClaimResponses() {
-        // Fetch all ClaimResponses
-        List<ClaimResponse> claimResponses = fetchAllClaimResponses();
-
-        // Map and return list of PatientClaimResponse
-        return claimResponses.stream()
-                .map(this::mapToPatientClaimResponse)
-                .collect(Collectors.toList());
-    }
-    /**
-     * Fetches all ClaimResponses from the FHIR server.
-     *
-     * @return List of ClaimResponse objects
-     */
-    private List<ClaimResponse> fetchAllClaimResponses() {
-        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
-        Bundle bundle = client.search()
-                .forResource(ClaimResponse.class)
-                .returnBundle(Bundle.class)
-                .execute();
-
-        return bundle.getEntry().stream()
-                .map(entry -> (ClaimResponse) entry.getResource())
-                .collect(Collectors.toList());
-    }
-    /**
-     * Fetches a Patient resource using a patient reference string.
-     *
-     * @param patientReference The patient reference string (e.g., "Patient/1")
-     * @return Patient object
-     */
-    private Patient fetchPatientIdByReference(String patientReference) {
-        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
-        // Extract the patient ID from the reference string
-        String[] referenceParts = patientReference.split("/");
-        if (referenceParts.length != 2 || !referenceParts[0].equals("Patient")) {
-            log.error("Invalid patient reference: {}", patientReference);
-            return null;
-        }
-        String patientId = referenceParts[1];
-        try {
-            return client.read()
-                    .resource(Patient.class)
-                    .withId(patientId)
-                    .execute();
-        }catch (Exception e) {
-            log.error("Error fetching Patient with ID {}: {}", patientId, e.getMessage());
-            return null;
-        }
-    }
-    /**
-     * Maps a ClaimResponse object to a PatientClaimResponse object.
-     *
-     * @param claimResponse The ClaimResponse object
-     * @return PatientClaimResponse object
-     */
-    private PatientClaimResponse mapToPatientClaimResponse(ClaimResponse claimResponse) {
-        // Fetch Patient details using patient reference from ClaimResponse
-        String patientReference = claimResponse.getPatient().getReference();
-        Patient patient = fetchPatientIdByReference(patientReference);
-
-        PatientClaimResponse patientClaimResponse = new PatientClaimResponse();
-        // Map Patient details
-        if (patient != null) {
-            mapPatientDetails(patient, patientClaimResponse);
-        }
-        // Map ClaimResponse Data
-        mapClaimResponseDetails(claimResponse, patientClaimResponse);
-
-        return patientClaimResponse;
-
-    }
     /**
      * Maps Patient details to a PatientClaimResponse object.
      *
      * @param patient The Patient object
-     * @param patientClaimResponse The PatientClaimResponse object to populate
+     * @param patientCRResponse The PatientClaimResponse object to populate
      */
-    private void mapPatientDetails(Patient patient, PatientClaimResponse patientClaimResponse){
+    private void mapPatientDetails(Patient patient, PatientCRResponse patientCRResponse){
         if (patient.hasId()) {
             String patientServerId = patient.getIdElement().getIdPart();
-            patientClaimResponse.setPatientUniqueId(hapiServerTag + "-Patient-" + patientServerId);
-
+            patientCRResponse.setPatientUniqueId(hapiServerTag + "-Patient-" + patientServerId);
         }
         if (patient.hasName()) {
             HumanName firstAvailableName = patient.getName().get(0);
             String firstName = firstAvailableName.getGivenAsSingleString();
             String lastName = firstAvailableName.getFamily();
-            patientClaimResponse.setFirstName(firstName);
-            patientClaimResponse.setLastName(lastName);
+            patientCRResponse.setFirstName(firstName);
+            patientCRResponse.setLastName(lastName);
         }
         if (patient.hasTelecom()) {
             // Initialize variables to hold phone and email values
@@ -439,20 +535,20 @@ public class ClaimResponseService {
                 }
             }
             // Set phone and email values to the patientClaimResponse
-            patientClaimResponse.setPhone(phone);
-            patientClaimResponse.setEmail(email);
+            patientCRResponse.setPhone(phone);
+            patientCRResponse.setEmail(email);
         }
         if (patient.hasGender()) {
-            patientClaimResponse.setGender(patient.getGender().toCode());
+            patientCRResponse.setGender(patient.getGender().toCode());
         }
         if (patient.hasBirthDate()) {
-            patientClaimResponse.setBirthDate(patient.getBirthDateElement().getValueAsString());
+            patientCRResponse.setBirthDate(patient.getBirthDateElement().getValueAsString());
         }
         if (patient.hasGeneralPractitioner()) {
-            patientClaimResponse.setGeneralPractitioner(patient.getGeneralPractitionerFirstRep().getReference());
+            patientCRResponse.setGeneralPractitioner(patient.getGeneralPractitionerFirstRep().getReference());
         }
         if (patient.hasManagingOrganization()) {
-            patientClaimResponse.setManagingOrganization(patient.getManagingOrganization().getReference());
+            patientCRResponse.setManagingOrganization(patient.getManagingOrganization().getReference());
         }
         if (patient.hasAddress()) {
             Address address = patient.getAddressFirstRep();
@@ -461,52 +557,52 @@ public class ClaimResponseService {
                     .map(StringType::getValue)
                     .collect(Collectors.joining(", "));
 
-            patientClaimResponse.setAddress(fullAddress); // Assuming at least one line is present
-            patientClaimResponse.setCity(address.getCity());
-            patientClaimResponse.setDistrict(address.getDistrict());
-            patientClaimResponse.setState(address.getState());
-            patientClaimResponse.setPostalCode(address.getPostalCode());
-            patientClaimResponse.setCountry(address.getCountry());
+            patientCRResponse.setAddress(fullAddress); // Assuming at least one line is present
+            patientCRResponse.setCity(address.getCity());
+            patientCRResponse.setDistrict(address.getDistrict());
+            patientCRResponse.setState(address.getState());
+            patientCRResponse.setPostalCode(address.getPostalCode());
+            patientCRResponse.setCountry(address.getCountry());
         }
     }
     /**
      * Maps ClaimResponse details to a PatientClaimResponse object.
      *
      * @param claimResponse The ClaimResponse object
-     * @param patientClaimResponse The PatientClaimResponse object to populate
+     * @param patientCRResponse The PatientClaimResponse object to populate
      */
-    private void mapClaimResponseDetails(ClaimResponse claimResponse, PatientClaimResponse patientClaimResponse) {
+    private void mapClaimResponseDetails(ClaimResponse claimResponse, PatientCRResponse patientCRResponse) {
         if (claimResponse != null) {
             if (claimResponse.hasId()) {
                 String claimResponseServerId = claimResponse.getIdElement().getIdPart();
-                patientClaimResponse.setClaimResponseUniqueId(hapiServerTag + "-ClaimResponse-" + claimResponseServerId);
+                patientCRResponse.setClaimResponseUniqueId(hapiServerTag + "-ClaimResponse-" + claimResponseServerId);
             }
             if (claimResponse.hasStatus()) {
-                patientClaimResponse.setClaimResponseStatus(claimResponse.getStatus().toCode());
+                patientCRResponse.setClaimResponseStatus(claimResponse.getStatus().toCode());
             }
             if (claimResponse.hasUse()) {
-                patientClaimResponse.setClaimResponseUse(claimResponse.getUse().toCode());
+                patientCRResponse.setClaimResponseUse(claimResponse.getUse().toCode());
             }
             if (claimResponse.hasOutcome()) {
-                patientClaimResponse.setClaimResponseOutcome(claimResponse.getOutcome().toCode());
+                patientCRResponse.setClaimResponseOutcome(claimResponse.getOutcome().toCode());
             }
             if (claimResponse.hasDisposition()) {
-                patientClaimResponse.setClaimResponseDisposition(claimResponse.getDisposition());
+                patientCRResponse.setClaimResponseDisposition(claimResponse.getDisposition());
             }
             if (claimResponse.hasPatient() && claimResponse.getPatient().hasReference()) {
-                patientClaimResponse.setPatientReference(claimResponse.getPatient().getReference());
+                patientCRResponse.setPatientReference(claimResponse.getPatient().getReference());
             }
             // Map items
             if (claimResponse.hasItem()) {
-                patientClaimResponse.setItem(claimResponse.getItem().stream()
+                patientCRResponse.setItem(claimResponse.getItem().stream()
                         .map(item -> {
-                            ClaimResponseItemDTO itemDTO = new ClaimResponseItemDTO();
+                            CRResponseItemDTO itemDTO = new CRResponseItemDTO();
                             itemDTO.setItemSequence(item.getItemSequence());
 
                             // Map adjudications
-                            List<ClaimResponseAdjudicationDTO> adjudicationDTOs = item.getAdjudication().stream()
+                            List<CRResponseAdjudicationDTO> adjudicationDTOs = item.getAdjudication().stream()
                                     .map(adjudication -> {
-                                        ClaimResponseAdjudicationDTO adjudicationDTO = new ClaimResponseAdjudicationDTO();
+                                        CRResponseAdjudicationDTO adjudicationDTO = new CRResponseAdjudicationDTO();
                                         adjudicationDTO.setAdjudicationCategoryCode(mapAdjudicationCategory(adjudication.getCategory().getCodingFirstRep().getCode()));
                                         adjudicationDTO.setAdjudicationAmountValue(adjudication.getAmount().getValue().doubleValue());
                                         adjudicationDTO.setAdjudicationAmountCurrency(adjudication.getAmount().getCurrency());
@@ -524,9 +620,9 @@ public class ClaimResponseService {
             }
             // Map totals
             if (claimResponse.hasTotal()) {
-                patientClaimResponse.setTotal(claimResponse.getTotal().stream()
+                patientCRResponse.setTotal(claimResponse.getTotal().stream()
                         .map(total -> {
-                            ClaimResponseAdjudicationDTO totalDTO = new ClaimResponseAdjudicationDTO();
+                            CRResponseAdjudicationDTO totalDTO = new CRResponseAdjudicationDTO();
                             totalDTO.setAdjudicationCategoryCode(mapAdjudicationCategory(total.getCategory().getCodingFirstRep().getCode()));
                             totalDTO.setAdjudicationAmountValue(total.getAmount().getValue().doubleValue());
                             totalDTO.setAdjudicationAmountCurrency(total.getAmount().getCurrency());
@@ -536,7 +632,7 @@ public class ClaimResponseService {
             }
             // Map payment details
             if (claimResponse.hasPayment()) {
-                patientClaimResponse.setPaymentType(claimResponse.getPayment().getType().getCoding().stream()
+                patientCRResponse.setPaymentType(claimResponse.getPayment().getType().getCoding().stream()
                         .map(coding -> {
                             CodingDTO codingDTO = new CodingDTO();
                             codingDTO.setSystem(coding.getSystem());
@@ -544,11 +640,11 @@ public class ClaimResponseService {
                             return codingDTO;
                         })
                         .collect(Collectors.toList()));
-                patientClaimResponse.setPaymentDate(claimResponse.getPayment().getDate());
+                patientCRResponse.setPaymentDate(claimResponse.getPayment().getDate());
 
                 if (claimResponse.getPayment().hasAmount()) {
-                    patientClaimResponse.setPaymentAmountValue(claimResponse.getPayment().getAmount().getValue().doubleValue());
-                    patientClaimResponse.setPaymentAmountCurrency(claimResponse.getPayment().getAmount().getCurrency());
+                    patientCRResponse.setPaymentAmountValue(claimResponse.getPayment().getAmount().getValue().doubleValue());
+                    patientCRResponse.setPaymentAmountCurrency(claimResponse.getPayment().getAmount().getCurrency());
                 }
             }
         }

@@ -23,8 +23,6 @@ public class ClaimResponse {
     @Column(name = "claim_response_id")
     private Long id;
 
-    private String EHRCategoryTag;
-
     @Column(name = "claim_response_server_id")
     private String claimResponseId;
 

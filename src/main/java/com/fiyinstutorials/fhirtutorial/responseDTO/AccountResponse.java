@@ -1,16 +1,21 @@
 package com.fiyinstutorials.fhirtutorial.responseDTO;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
+@Builder
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountResponse {
-        private String EHRCategoryTag;
         private String accountId;
         private String accountUniqueId;
         private String accountName;

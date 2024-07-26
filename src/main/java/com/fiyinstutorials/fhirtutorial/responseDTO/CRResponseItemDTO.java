@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ClaimResponseItemDTO {
+public class CRResponseItemDTO {
     private int itemSequence;
-    private List<ClaimResponseAdjudicationDTO> adjudication;
+    private List<CRResponseAdjudicationDTO> adjudication;
 }

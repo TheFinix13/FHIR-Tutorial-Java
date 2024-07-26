@@ -25,8 +25,6 @@ public class Account {
     @Column(name = "account_id")
     private Long id;
 
-    private String EHRCategoryTag;
-
     @Column(name = "account_server_id")
     private String accountId;
 
