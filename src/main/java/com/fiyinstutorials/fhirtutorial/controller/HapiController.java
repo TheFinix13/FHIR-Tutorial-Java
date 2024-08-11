@@ -1,6 +1,10 @@
 package com.fiyinstutorials.fhirtutorial.controller;
 
-import com.fiyinstutorials.fhirtutorial.responseDTO.*;
+import com.fiyinstutorials.fhirtutorial.responseDTO.account.AccountResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.patient.PatientCRResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.patient.PatientResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.paymentnotice.PaymentNoticeResponse;
 import com.fiyinstutorials.fhirtutorial.service.AccountService;
 import com.fiyinstutorials.fhirtutorial.service.ClaimResponseService;
 import com.fiyinstutorials.fhirtutorial.service.PatientService;
@@ -114,6 +118,32 @@ public class HapiController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    @GetMapping("/getAClaimResponse/{id}")
+    public ResponseEntity<String> updateClaimResponse(@PathVariable("id") String id) {
+        try {
+            claimResponseService.getAClaimResponse(id);
+            return ResponseEntity.ok("ClaimResponse fetched successfully.");
+        } catch (Exception e) {
+            log.error("Error retrieving ClaimResponse {}: ", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving ClaimResponse");
+        }
+    }
+
+    @PutMapping("/updateClaimResponseOutcome/{id}")
+    public ResponseEntity<String> updateClaimResponse(
+            @PathVariable("id") String id,
+            @RequestParam(value = "outcome", required = false) String newOutcome,
+            @RequestParam(value = "paymentType", required = false) List<String> newPaymentTypes) {
+
+        try {
+            claimResponseService.updateAClaimResponse(id, newOutcome, newPaymentTypes);
+            return ResponseEntity.ok("ClaimResponse updated successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating ClaimResponse: " + e.getMessage());
+        }
+    }
 
     @GetMapping("/getPaymentNotice")
     public List<PaymentNoticeResponse> fetchAllPaymentNotices() {
@@ -137,7 +167,10 @@ public class HapiController {
             return "An error occurred while saving Payment Notices.";
         }
     }
+
+
 }
+
 
 //    @GetMapping("/getPatientPaymentNotice")
 //    public ResponseEntity<List<PaymentNoticeResponse>> fetchAndSavePaymentNotices() {

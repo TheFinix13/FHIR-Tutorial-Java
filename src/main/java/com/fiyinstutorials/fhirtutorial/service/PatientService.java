@@ -5,7 +5,7 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import com.fiyinstutorials.fhirtutorial.repository.IdentifierRepository;
 import com.fiyinstutorials.fhirtutorial.repository.PatientRepository;
 import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
-import com.fiyinstutorials.fhirtutorial.responseDTO.PatientResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.patient.PatientResponse;
 import com.fiyinstutorials.fhirtutorial.utils.StatusCodes;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.*;

@@ -8,7 +8,12 @@ import ca.uhn.fhir.rest.gclient.IQuery;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.fiyinstutorials.fhirtutorial.repository.ClaimResponseRepository;
-import com.fiyinstutorials.fhirtutorial.responseDTO.*;
+import com.fiyinstutorials.fhirtutorial.responseDTO.CodingDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponseAdjudicationDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponseItemDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.patient.PatientCRResponse;
 import com.fiyinstutorials.fhirtutorial.utils.StatusCodes;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.*;
@@ -16,8 +21,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,46 +36,71 @@ public class ClaimResponseService {
     private String hapiServerTag;
 
     private final FhirContext fhirContext = FhirContext.forR4();
-
-    //    private final PatientRepository patientRepository;
     private final ClaimResponseRepository claimResponseRepository;
-    private final RestTemplate restTemplate;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public ClaimResponseService(RestTemplate restTemplate, ClaimResponseRepository claimResponseRepository, ModelMapper modelMapper) {
-        this.restTemplate = restTemplate;
-//        this.patientRepository = patientRepository;
+    public ClaimResponseService(ClaimResponseRepository claimResponseRepository, ModelMapper modelMapper) {
         this.claimResponseRepository = claimResponseRepository;
         this.modelMapper = modelMapper;
     }
 
-    /**
-     * Template to Fetch resources from the FHIR server.
-     * <p>
-     * Builds the URL for querying ClaimResponse resources from the FHIR server.
-     * Makes an HTTP GET request to the server and returns the response as a String.
-     *
-     * @return The response from the FHIR server as a String
-     */
-    public String fetchClaimResponses() {
-        // Build the URL for the FHIR server query
-        String url = UriComponentsBuilder.fromHttpUrl(hapiServerBaseUrl)
-                .pathSegment("ClaimResponse")
-                .queryParam("_count", "100")
-                .queryParam("_include", "*")
-                .queryParam("_include", "ClaimResponse:patient")
-                .queryParam("_include", "ClaimResponse:request")
-                .queryParam("_include", "ClaimResponse:requestor")
-                .queryParam("_pretty", "true")
-                .toUriString();
+    public void getAClaimResponse(String claimResponseId) {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
 
-        // Make the HTTP GET request
+        try {
+            ClaimResponse claimResponse = client.read()
+                    .resource(ClaimResponse.class)
+                    .withId(claimResponseId)
+                    .execute();
 
-        // Return the response as a String (or you could parse it into a more structured format)
-        return restTemplate.getForObject(url, String.class);
+            String jsonResponse = fhirContext.newJsonParser().encodeResourceToString(claimResponse);
+            log.info("Retrieved ClaimResponse {}: {}", claimResponseId, jsonResponse);
+        } catch (Exception e) {
+            log.error("Error retrieving ClaimResponse {}: ", claimResponseId, e);
+            throw e;
+        }
     }
 
+    public void updateAClaimResponse(String claimResponseId, String newOutcome, List<String> newPaymentTypes) {
+        IGenericClient client = fhirContext.newRestfulGenericClient(hapiServerBaseUrl);
+        IClientInterceptor loggingInterceptor = new LoggingInterceptor();
+        client.registerInterceptor(loggingInterceptor);
+
+        try {
+            ClaimResponse claimResponse = client.read()
+                    .resource(ClaimResponse.class)
+                    .withId(claimResponseId)
+                    .execute();
+
+            // Update outcome if provided
+            if (newOutcome != null && !newOutcome.isEmpty()) {
+                ClaimResponse.RemittanceOutcome fhirOutcomeCode = mapOutcomeToRemittanceOutcome(newOutcome);
+                claimResponse.setOutcome(fhirOutcomeCode);
+            }
+
+            // Update paymentType if provided
+            if (newPaymentTypes != null && !newPaymentTypes.isEmpty()) {
+                List<Coding> paymentCodings = newPaymentTypes.stream()
+                        .map(type -> new Coding().setCode(mapPaymentType(type)))
+                        .collect(Collectors.toList());
+                if (claimResponse.getPayment() == null) {
+                    claimResponse.setPayment(new ClaimResponse.PaymentComponent());
+                }
+                claimResponse.getPayment().setType(new CodeableConcept().setCoding(paymentCodings));
+            }
+            client.update()
+                    .resource(claimResponse)
+                    .execute();
+
+            log.info("ClaimResponse {} updated successfully.", claimResponseId);
+        } catch (Exception e) {
+            log.error("Error updating ClaimResponse {}: ", claimResponseId, e);
+            throw e;
+        }
+    }
     /**
      * Fetches a single ClaimResponse for a specific patient ID.
      *
@@ -687,7 +715,7 @@ public class ClaimResponseService {
             case "partial":
                 return StatusCodes.CLAIM_RESPONSE_OUTCOME_PARTIAL;
             default:
-                return "Unknown";
+                throw new IllegalArgumentException("Unknown outcome: " + fhirOutcomeCode);
         }
     }
     private String mapPayeeType(String fhirPayeeTypeCode) {
@@ -738,6 +766,26 @@ public class ClaimResponseService {
         }
     }
 
+    /**
+     * Maps a string to RemittanceOutcome.
+     *
+     * @param newOutcome The string representation of the outcome
+     * @return The RemittanceOutcome corresponding to the string
+     */
+    private ClaimResponse.RemittanceOutcome mapOutcomeToRemittanceOutcome(String newOutcome) {
+        switch (newOutcome.toLowerCase()) {
+            case "queued":
+                return ClaimResponse.RemittanceOutcome.QUEUED;
+            case "complete":
+                return ClaimResponse.RemittanceOutcome.COMPLETE;
+            case "error":
+                return ClaimResponse.RemittanceOutcome.ERROR;
+            case "partial":
+                return ClaimResponse.RemittanceOutcome.PARTIAL;
+            default:
+                throw new IllegalArgumentException("Unknown outcome: " + newOutcome);
+        }
+    }
 
 
 }

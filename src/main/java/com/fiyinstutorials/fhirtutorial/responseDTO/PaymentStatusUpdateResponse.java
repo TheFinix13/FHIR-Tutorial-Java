@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PaymentUpdateStatusResponse {
+public class PaymentStatusUpdateResponse {
     //Patient
     private String patientId;
     private String patientUniqueId;

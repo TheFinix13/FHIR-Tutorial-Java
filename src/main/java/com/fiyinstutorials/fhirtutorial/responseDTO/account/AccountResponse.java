@@ -1,6 +1,7 @@
-package com.fiyinstutorials.fhirtutorial.responseDTO;
+package com.fiyinstutorials.fhirtutorial.responseDTO.account;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

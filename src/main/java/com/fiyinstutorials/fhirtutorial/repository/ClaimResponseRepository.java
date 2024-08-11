@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface ClaimResponseRepository extends JpaRepository<ClaimResponse, Long> {
 
     boolean existsByClaimResponseId(String claimResponseId);
+
+    ClaimResponse findByClaimResponseId(String claimResponseId);
 }

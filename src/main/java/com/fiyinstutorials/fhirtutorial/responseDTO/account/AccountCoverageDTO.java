@@ -1,4 +1,4 @@
-package com.fiyinstutorials.fhirtutorial.responseDTO;
+package com.fiyinstutorials.fhirtutorial.responseDTO.account;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

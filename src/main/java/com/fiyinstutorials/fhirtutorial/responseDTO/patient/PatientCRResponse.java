@@ -1,7 +1,10 @@
-package com.fiyinstutorials.fhirtutorial.responseDTO;
+package com.fiyinstutorials.fhirtutorial.responseDTO.patient;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fiyinstutorials.fhirtutorial.responseDTO.CodingDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponseAdjudicationDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.claimresponse.CRResponseItemDTO;
 import lombok.Getter;
 import lombok.Setter;
 

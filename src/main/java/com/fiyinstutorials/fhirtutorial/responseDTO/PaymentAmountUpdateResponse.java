@@ -1,4 +1,4 @@
 package com.fiyinstutorials.fhirtutorial.responseDTO;
 
-public class PaymentNoticeCRResponse {
+public class PaymentAmountUpdateResponse {
 }

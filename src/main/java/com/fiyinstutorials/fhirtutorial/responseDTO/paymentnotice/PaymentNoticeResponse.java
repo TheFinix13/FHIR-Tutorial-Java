@@ -1,7 +1,9 @@
-package com.fiyinstutorials.fhirtutorial.responseDTO;
+package com.fiyinstutorials.fhirtutorial.responseDTO.paymentnotice;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fiyinstutorials.fhirtutorial.responseDTO.CodingDTO;
+import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
 import lombok.Getter;
 import lombok.Setter;
 

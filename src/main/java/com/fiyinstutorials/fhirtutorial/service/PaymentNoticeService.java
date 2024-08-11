@@ -11,7 +11,7 @@ import com.fiyinstutorials.fhirtutorial.repository.AccountRepository;
 import com.fiyinstutorials.fhirtutorial.repository.PaymentNoticeRepository;
 import com.fiyinstutorials.fhirtutorial.responseDTO.CodingDTO;
 import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
-import com.fiyinstutorials.fhirtutorial.responseDTO.PaymentNoticeResponse;
+import com.fiyinstutorials.fhirtutorial.responseDTO.paymentnotice.PaymentNoticeResponse;
 import com.fiyinstutorials.fhirtutorial.utils.StatusCodes;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Bundle;

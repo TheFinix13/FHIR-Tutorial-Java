@@ -1,6 +1,7 @@
-package com.fiyinstutorials.fhirtutorial.responseDTO;
+package com.fiyinstutorials.fhirtutorial.responseDTO.patient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fiyinstutorials.fhirtutorial.responseDTO.IdentifierDTO;
 import lombok.Getter;
 import lombok.Setter;
 
